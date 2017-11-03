@@ -59,8 +59,8 @@ if [[ $help ]]; then
     echo "All arguments will be interpreted as the <command> to run"
     echo "when changes of any of the files matching the pattern changes."
     echo
-    echo "Currently recursively watches files with pattern:"
-    echo "    '*.[ch] Makefile CMakefile.txt'"
+    echo "Currently recursively ignores files with pattern:"
+    echo "    '.#*' and '.git/"
 fi
 if test "$#" -eq 0; then
     exit
