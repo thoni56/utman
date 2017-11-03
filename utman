@@ -9,12 +9,6 @@
 # All arguments will be considered the command to run
 #
 
-#======================================================================
-# Figure out how to watch files
-if command -v fswatch >/dev/null 2>&1 ; then
-    watcher=fswatch
-fi
-
 # Where's the source? The default icons are there...
 SOURCE="${BASH_SOURCE[0]}"
 while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
@@ -66,6 +60,7 @@ if [[ $help ]]; then
     echo
     echo "Currently there are no options available."
     echo "All arguments that are not options, will be the command line that is run."
+    echo "Currently recursively watches '*.[ch] Makefile CMakefile.txt'"
 fi
 if test "$#" -eq 0; then
     exit
@@ -76,6 +71,15 @@ if [[ "$os" == *"CYGWIN"* ]] ; then
     os="Cygwin"
 fi
 
+#======================================================================
+# Figure out how to watch files and the file pattern
+watcher = ''
+if command -v fswatch >/dev/null 2>&1 ; then
+    watcher=fswatch
+    pattern='*.[ch] Makefile CMakeList.txt'
+fi
+
+#======================================================================
 # Select notifier mechanism depending on availability
 case $os in
     Darwin)
@@ -117,7 +121,10 @@ case $os in
         ;;
 esac
 
-# If no known mechanism available, give hints depending on OS
+#======================================================================
+# Did we find both a watcher and a notifier?
+
+# If no known notifier mechanism available, give hints depending on OS
 if [ "$mechanism" = "" ] ; then
     echo "ERROR: No known mechanism for notifications found."
     if [ "$os" = "Darwin" ] ; then
@@ -132,11 +139,19 @@ if [ "$mechanism" = "" ] ; then
         echo "'snoretoast' (Windows notifications) from https://github.com/KDE/snoretoast."
     else
         echo "No idea how to create nice notifications on this OS..."
-        echo "Please suggest a mechanism at https://github.com/thoni56/unittest-notifier"
+        echo "Please suggest a mechanism at https://github.com/thoni56/utman"
     fi
+fi
+if [ "$watcher" = "" ] ; then
+    echo "ERROR: No watcher found, suggestions will be added here at some point..."
+    echo "Currently only fswatch (https://github.com/emcrisostomo/fswatch) is supported."
+fi
+if [ "$watcher" = "" || "$notifier" = ""] ; then
+    echo "Exiting"
     exit 1
 fi
 
+#======================================================================
 # Set up options for icons depending on mechanism
 case $mechanism in
     terminal-notifier)
@@ -166,14 +181,15 @@ case $mechanism in
         message_prefix="-m "
         app_icon_prefix=
         icon_prefix="-p "
-        extra="-appId Unittest-notifier -silent"
+        extra="-appId Utman -silent"
         ;;
     *)
         echo "Unknown notifier mechanism. Exiting..."
         exit
 esac
 
-# Set default values for most options
+#======================================================================
+# Set default values for most notifier options
 title_text="Unittests"
 start_text="Starting..."
 passed_text="Passed"
@@ -183,7 +199,8 @@ start_icon="$DIR"/icon-start.png
 passed_icon="$DIR"/icon-passed.png
 failed_icon="$DIR"/icon-failed.png
 
-# Then tweak depending on os and mechanism, if needed
+#======================================================================
+# Tweak depending on os and mechanism, if needed
 if [ "$os" = "Cygwin" ] ; then
     # Need windows paths to icons
     app_icon=`cygpath -w -a "$app_icon"`
@@ -196,14 +213,18 @@ if [ "$mechanism" = "snoretoast" ] ; then
     app_icon=
 fi
 
+#======================================================================
 # Assemble all notifier options
 title="$title_prefix$title_text"
 start="$icon_prefix$start_icon $message_prefix$start_text"
 passed="$icon_prefix$passed_icon $message_prefix$passed_text"
 failed="$icon_prefix$failed_icon $message_prefix$failed_text"
 
+
+#======================================================================
+# Let's run...
 while true ; do
-    fswatch -r -1 *.[ch]
+    $watcher -r -1 $pattern
 
     # Indicate start
     if [ $debug ] ; then
