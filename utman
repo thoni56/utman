@@ -9,17 +9,6 @@
 # All arguments will be considered the command to run
 #
 
-# Where's the source? The default icons are there...
-SOURCE="${BASH_SOURCE[0]}"
-while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
-  DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
-  SOURCE="$(readlink "$SOURCE")"
-  # if $SOURCE is a relative symlink, we must resolve it relative to the path where
-  # the symlinked file is located
-  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
-done
-DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
-
 # Handle options
 while getopts ":t:dh" opt; do
     case $opt in
@@ -52,15 +41,26 @@ done
 
 # Is there a command or help option given?
 if test "$#" -eq 0; then
-    echo "ERROR: expecting a command to run"
+    echo "ERROR: expecting a <command> to run"
+    echo
     help=1
 fi
 if [[ $help ]]; then
-    echo "Usage: $0 <options> <command>"
+    echo "utman - a file pattern monitor, command runner and notifier."
     echo
-    echo "Currently there are no options available."
-    echo "All arguments that are not options, will be the command line that is run."
-    echo "Currently recursively watches '*.[ch] Makefile CMakefile.txt'"
+    echo "Typical usage include monitoring source files for changes and"
+    echo "running a build/unittest command, and making a notification"
+    echo "of results using a desktop notification."
+    echo
+    echo "Usage: $( basename "$0" ) <options> <command>"
+    echo
+    echo "Currently there are no <options>."
+    echo
+    echo "All arguments will be interpreted as the <command> to run"
+    echo "when changes of any of the files matching the pattern changes."
+    echo
+    echo "Currently recursively watches files with pattern:"
+    echo "    '*.[ch] Makefile CMakefile.txt'"
 fi
 if test "$#" -eq 0; then
     exit
@@ -73,10 +73,11 @@ fi
 
 #======================================================================
 # Figure out how to watch files and the file pattern
-watcher = ''
+watcher=''
 if command -v fswatch >/dev/null 2>&1 ; then
     watcher=fswatch
-    pattern='*.[ch] Makefile CMakeList.txt'
+    ipattern=''
+    xpattern='-e \\.#\\.* -e \\.git/*' # Exclude emacs temporary files and git repo-files
 fi
 
 #======================================================================
@@ -146,7 +147,7 @@ if [ "$watcher" = "" ] ; then
     echo "ERROR: No watcher found, suggestions will be added here at some point..."
     echo "Currently only fswatch (https://github.com/emcrisostomo/fswatch) is supported."
 fi
-if [ "$watcher" = "" || "$notifier" = ""] ; then
+if [ "$watcher" = "" ] || [ "$notifier" = "" ] ; then
     echo "Exiting"
     exit 1
 fi
@@ -189,6 +190,18 @@ case $mechanism in
 esac
 
 #======================================================================
+# Where's the source? The default icons are there...
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
+  DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+  SOURCE="$(readlink "$SOURCE")"
+  # if $SOURCE is a relative symlink, we must resolve it relative to the path where
+  # the symlinked file is located
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+
+#======================================================================
 # Set default values for most notifier options
 title_text="Unittests"
 start_text="Starting..."
@@ -224,7 +237,7 @@ failed="$icon_prefix$failed_icon $message_prefix$failed_text"
 #======================================================================
 # Let's run...
 while true ; do
-    $watcher -r -1 $pattern
+    $watcher -r -1 -i $ipattern -x $xpattern .
 
     # Indicate start
     if [ $debug ] ; then
