@@ -75,10 +75,13 @@ fi
 # Figure out how to watch files and the file pattern
 watcher=''
 if command -v fswatch >/dev/null 2>&1 ; then
-    echo "Found watcher 'fswatch'"
+    if [ $debug ] ; then
+        echo "Found watcher 'fswatch'"
+    fi
     watcher=fswatch
     ipattern=''
-    xpattern='-e \\.#\\.* -e \\.git/*' # Exclude emacs temporary files and git repo-files
+    xpattern='-e .\#.* -e .git' # Exclude emacs temporary files and git repo-files
+    watcher_options='-r -1 --event 14' # Recursive, one event, events=Created,Updated,Removed
 fi
 
 #======================================================================
@@ -238,7 +241,10 @@ failed="$icon_prefix$failed_icon $message_prefix$failed_text"
 #======================================================================
 # Let's run...
 while true ; do
-    $watcher -r -1 $ipattern $xpattern .
+    if [ $debug ] ; then
+        echo $watcher $watcher_options $ipattern $xpattern .
+    fi
+    $watcher $watcher_options $ipattern $xpattern .
 
     # Indicate start
     if [ $debug ] ; then
