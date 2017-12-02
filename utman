@@ -6,7 +6,7 @@
 # Usage:
 #   utman [options] command ...
 #
-# All arguments will be considered the command to run
+# All arguments will be considered to be the command to run
 #
 
 # Handle options
@@ -46,11 +46,11 @@ if test "$#" -eq 0; then
     help=1
 fi
 if [[ $help ]]; then
-    echo "utman - a file pattern monitor, command runner and notifier."
+    echo "utman - a file change monitor, command runner and notifier"
     echo
-    echo "Typical usage include monitoring source files for changes and"
+    echo "Typical usage include monitoring source files for changes,"
     echo "running a build/unittest command, and making a notification"
-    echo "of results using a desktop notification."
+    echo "of the result using a desktop notification."
     echo
     echo "Usage: $( basename "$0" ) <options> <command>"
     echo
@@ -75,6 +75,7 @@ fi
 # Figure out how to watch files and the file pattern
 watcher=''
 if command -v fswatch >/dev/null 2>&1 ; then
+    echo "Found watcher 'fswatch'"
     watcher=fswatch
     ipattern=''
     xpattern='-e \\.#\\.* -e \\.git/*' # Exclude emacs temporary files and git repo-files
@@ -237,7 +238,7 @@ failed="$icon_prefix$failed_icon $message_prefix$failed_text"
 #======================================================================
 # Let's run...
 while true ; do
-    $watcher -r -1 -i $ipattern -x $xpattern .
+    $watcher -r -1 $ipattern $xpattern .
 
     # Indicate start
     if [ $debug ] ; then
