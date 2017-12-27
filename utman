@@ -160,33 +160,41 @@ fi
 # Set up options for icons depending on mechanism
 case $mechanism in
     terminal-notifier)
+        application_prefix=
+        app_icon_prefix="-appIcon "
         title_prefix="-title "
         message_prefix="-message "
-        app_icon_prefix="-appIcon "
         icon_prefix="-contentImage "
         ;;
     notify-send)
+        application_prefix="--app-name="
+        app_icon_prefix=
         title_prefix=" "
         message_prefix=" "
-        icon_prefix="-i "
+        icon_prefix="--icon="
         ;;
     growlnotify)
-        title_prefix="-t "
-        message_prefix="-m "
-        icon_prefix="-I "
+        application_prefix="--name "
+        app_icon_prefix="--appIcon "
+        title_prefix="--title "
+        message_prefix="--message "
+        icon_prefix="--image "
         ;;
     growlnotify.exe)
+        application_prefix="/a:"
+        app_icon_prefix=
         title_prefix="/t:"
-        message_prefix=
+        message_prefix=" "
         icon_prefix="/i:"
         extra="/silent:true"
         ;;
     snoretoast)
+        application_prefix="-appId "
+        app_icon_prefix=
         title_prefix="-t "
         message_prefix="-m "
-        app_icon_prefix=
         icon_prefix="-p "
-        extra="-appId Utman -silent"
+        extra="-silent"
         ;;
     *)
         echo "Unknown notifier mechanism. Exiting..."
@@ -207,11 +215,12 @@ DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 #======================================================================
 # Set default values for most notifier options
+application_text="utman"
 title_text="Unittests"
 start_text="Starting..."
 passed_text="Passed"
 failed_text="Failed"
-app_icon="$DIR"/cgreen-icon.png
+app_icon="$DIR"/utman-icon.png
 start_icon="$DIR"/icon-start.png
 passed_icon="$DIR"/icon-passed.png
 failed_icon="$DIR"/icon-failed.png
@@ -232,10 +241,24 @@ fi
 
 #======================================================================
 # Assemble all notifier options
-title="$title_prefix$title_text"
-start="$icon_prefix$start_icon $message_prefix$start_text"
-passed="$icon_prefix$passed_icon $message_prefix$passed_text"
-failed="$icon_prefix$failed_icon $message_prefix$failed_text"
+if [ "$application_prefix" != "" ] ; then
+    application="$application_prefix$application_text"
+fi
+if [ "$app_icon_prefix" != "" ] ; then
+    app_icon="$app_icon_prefix$app_icon_text"
+fi
+if [ "$title_prefix" != "" ] ; then
+    title="$title_prefix$title_text"
+fi
+if [ "$icon_prefix" != "" ] ; then
+    start="$icon_prefix$start_icon $message_prefix$start_text"
+    passed="$icon_prefix$passed_icon $message_prefix$passed_text"
+    failed="$icon_prefix$failed_icon $message_prefix$failed_text"
+else
+    start="$message_prefix$start_text"
+    passed="$message_prefix$passed_text"
+    failed="$message_prefix$failed_text"
+fi
 
 
 #======================================================================
@@ -248,9 +271,9 @@ while true ; do
 
     # Indicate start
     if [ $debug ] ; then
-        echo START: "$notifier" $extra $title $start
+        echo START: "$notifier" $application $extra $title $start
     fi
-    "$notifier" $extra $title $start
+    "$notifier" $application $extra $title $start
 
     # Run the command
     ${@:1}
@@ -263,13 +286,13 @@ while true ; do
     fi
     if [ $status = 0 ] ; then
         if [ $debug ] ; then
-            echo FINISH: "$notifier" $extra $title $passed
+            echo FINISH: "$notifier" $application $extra $title $passed
         fi
-        "$notifier" $extra $title $passed
+        "$notifier" $application $extra $title $passed
     else
         if [ $debug ] ; then
-            echo FINISH: "$notifier" $extra $title $failed
+            echo FINISH: "$notifier" $application $extra $title $failed
         fi
-        "$notifier" $extra $title $failed
+        "$notifier" $application $extra $title $failed
     fi
 done
