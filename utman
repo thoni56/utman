@@ -8,6 +8,26 @@
 #
 # All arguments will be considered to be the command to run
 #
+# You can force utman to use specific, and unknown, notifiers and
+# watchers, or tweaking the defaults by entering information in your
+# ~/.utmanrc which will simply be executed before searching for
+# watchers and notifiers:
+#
+#     watcher='fswatch'
+#     watcher_options='-r -1 --event 14'
+#     watcher_exclude='-e .\#.* -e .git'
+#     watcher_include=''
+#     notifier='growlnotify.py'
+#     application_option="--application "
+#     app_icon_option="--appicon "
+#     title_option="--title "
+#     message_option=" "
+#     icon_option="--icon "
+#     extra=""
+#
+# If you set a notifier or watcher in you ~/.utmanrc you are
+# responsible to configure all the parts.
+
 
 # Handle options
 while getopts ":t:dh" opt; do
@@ -41,9 +61,11 @@ done
 
 # Is there a command or help option given?
 if test "$#" -eq 0; then
-    echo "ERROR: expecting a <command> to run"
-    echo
-    help=1
+    if [ ! $help ]; then
+        echo "ERROR: expecting a <command> to run"
+        echo
+        help=1
+    fi
 fi
 if [[ $help ]]; then
     echo "utman - a file change monitor, command runner and notifier"
@@ -54,13 +76,14 @@ if [[ $help ]]; then
     echo
     echo "Usage: $( basename "$0" ) <options> <command>"
     echo
-    echo "Currently there are no <options>."
+    echo "Currently there are no <options> except '-d' (debug)."
     echo
     echo "All arguments will be interpreted as the <command> to run"
     echo "when changes of any of the files matching the pattern changes."
     echo
     echo "Currently recursively ignores files with pattern:"
     echo "    '.#*' and '.git/"
+    echo
 fi
 if test "$#" -eq 0; then
     exit
@@ -73,64 +96,84 @@ fi
 
 #======================================================================
 # Figure out how to watch files and the file pattern
-watcher=''
-if command -v fswatch >/dev/null 2>&1 ; then
-    if [ $debug ] ; then
-        echo "Found watcher 'fswatch'"
+if [ "$watcher" == "" ]; then
+    watcher=''
+    if command -v fswatch >/dev/null 2>&1 ; then
+        watcher=fswatch
+        watcher_include=''
+        watcher_exclude='-e .\#.* -e .git' # Exclude emacs temporary files and git repo-files
+        watcher_options='-r -1 --event 14' # Recursive, one event, events=Created,Updated,Removed
     fi
-    watcher=fswatch
-    ipattern=''
-    xpattern='-e .\#.* -e .git' # Exclude emacs temporary files and git repo-files
-    watcher_options='-r -1 --event 14' # Recursive, one event, events=Created,Updated,Removed
+    if [ $debug ] ; then
+        echo "Found watcher '$watcher'"
+    fi
+else
+    if [ $debug ] ; then
+        echo "Using watcher '$watcher' from ~/.utmanrc"
+    fi
 fi
+
 
 #======================================================================
 # Select notifier mechanism depending on availability
-case $os in
-    Darwin)
-        if command -v terminal-notifier >/dev/null 2>&1 ; then
-            mechanism=terminal-notifier
-            notifier=terminal-notifier
-        elif command -v /Applications/terminal-notifier.app/Contents/MacOS/terminal-notifier >/dev/null 2>&1 ; then
-            mechanism=terminal-notifier
-            notifier=/Applications/terminal-notifier.app/Contents/MacOS/terminal-notifier
-        elif command -v growlnotify >/dev/null 2>&1 ; then
-            mechanism=growlnotify
-            notifier=growlnotify
-        fi
-        ;;
-    Cygwin)
-        if command -v growlnotify.exe >/dev/null 2>&1 ; then
-            mechanism=growlnotify.exe
-            notifier=growlnotify.exe
-        elif command -v notify-send >/dev/null 2>&1 ; then
-            mechanism=notify-send
-            notifier=notify-send
-        elif command -v  snoretoast >/dev/null 2>&1 ; then
-            mechanism=snoretoast
-            notifier=snoretoast
-        elif command -v  /cygdrive/c/Program\ Files\ \(x86\)/Growl\ for\ Windows/growlnotify.exe >/dev/null 2>&1 ; then
-            mechanism=growlnotify
-            notifier=/cygdrive/c/Program\ Files\ \(x86\)/Growl\ for\ Windows/growlnotify.exe
-        fi
 
-        ;;
-    Linux)
-        if command -v growlnotify >/dev/null 2>&1 ; then
-            mechanism=growlnotify
-            notifier=growlnotify
-        elif command -v notify-send >/dev/null 2>&1 ; then
-            mechanism=notify-send
-            notifier=notify-send
+if [ "$notifier" != "" ]; then
+    if [ $debug ]; then
+        echo "Using notifier '$notifier' from ~/.utmanrc"
+    fi
+else
+    if command -v growlnotify.py >/dev/null 2>&1 ; then
+        notifier=growlnotify.py
+        if [ $debug ]; then
+            echo "Found notifier '$notifier'"
         fi
-        ;;
-esac
+    fi
+fi
+
+if [ "$notifier" == "" ]; then
+    case $os in
+        Darwin)
+            if command -v terminal-notifier >/dev/null 2>&1 ; then
+                notifier=terminal-notifier
+            elif command -v /Applications/terminal-notifier.app/Contents/MacOS/terminal-notifier >/dev/null 2>&1 ; then
+                notifier=terminal-notifier
+                notifier_command=/Applications/terminal-notifier.app/Contents/MacOS/terminal-notifier
+            elif command -v growlnotify >/dev/null 2>&1 ; then
+                notifier=growlnotify
+            fi
+            ;;
+        Cygwin)
+            if command -v growlnotify.exe >/dev/null 2>&1 ; then
+                notifier=growlnotify.exe
+            elif command -v notify-send >/dev/null 2>&1 ; then
+                notifier=notify-send
+            elif command -v  snoretoast >/dev/null 2>&1 ; then
+                notifier=snoretoast
+            elif command -v  /cygdrive/c/Program\ Files\ \(x86\)/Growl\ for\ Windows/growlnotify.exe >/dev/null 2>&1 ; then
+                notifier=growlnotify
+                notifier_command=/cygdrive/c/Program\ Files\ \(x86\)/Growl\ for\ Windows/growlnotify.exe
+            fi
+
+            ;;
+        Linux)
+            if command -v growlnotify >/dev/null 2>&1 ; then
+                notifier=growlnotify
+            elif command -v notify-send >/dev/null 2>&1 ; then
+                notifier=notify-send
+            fi
+            ;;
+    esac
+    if [ $debug ]; then
+        echo "Found notifier '$notifier'"
+    fi
+fi
+
 
 #======================================================================
 # Did we find both a watcher and a notifier?
 
 # If no known notifier mechanism available, give hints depending on OS
-if [ "$mechanism" = "" ] ; then
+if [ "$notifier" = "" ] ; then
     echo "ERROR: No known mechanism for notifications found."
     if [ "$os" = "Darwin" ] ; then
         echo "Supported notifier for Darwin/MacOS is 'terminal-notifier' from"
@@ -144,7 +187,7 @@ if [ "$mechanism" = "" ] ; then
         echo "'snoretoast' (Windows notifications) from https://github.com/KDE/snoretoast."
     else
         echo "No idea how to create nice notifications on this OS..."
-        echo "Please suggest a mechanism at https://github.com/thoni56/utman"
+        echo "Please suggest a notifier at https://github.com/thoni56/utman"
     fi
 fi
 if [ "$watcher" = "" ] ; then
@@ -156,44 +199,62 @@ if [ "$watcher" = "" ] || [ "$notifier" = "" ] ; then
     exit 1
 fi
 
+
+# If no notifier command, assume same as notifier name
+if [ "$notifier_command" == "" ]; then
+    notifier_command=$notifier
+fi
+
+if [ $debug ] ; then
+    echo "Using notifier '$notifier' with command '$notifier_command'"
+fi
+
+
 #======================================================================
-# Set up options for icons depending on mechanism
-case $mechanism in
+# Set up options for icons depending on notifier
+case $notifier in
     terminal-notifier)
-        application_prefix=
-        app_icon_prefix="-appIcon "
-        title_prefix="-title "
-        message_prefix="-message "
-        icon_prefix="-contentImage "
+        application_option=
+        app_icon_option="-appIcon "
+        title_option="-title "
+        message_option="-message "
+        icon_option="-contentImage "
         ;;
     notify-send)
-        application_prefix="--app-name="
-        app_icon_prefix=
-        title_prefix=" "
-        message_prefix=" "
-        icon_prefix="--icon="
+        application_option="--app-name="
+        app_icon_option=
+        title_option=" "
+        message_option=" "
+        icon_option="--icon="
         ;;
     growlnotify)
-        application_prefix="--name "
-        app_icon_prefix="--appIcon "
-        title_prefix="--title "
-        message_prefix="--message "
-        icon_prefix="--image "
+        application_option="--name "
+        app_icon_option="--appIcon "
+        title_option="--title "
+        message_option="--message "
+        icon_option="--image "
         ;;
     growlnotify.exe)
-        application_prefix="/a:"
-        app_icon_prefix=
-        title_prefix="/t:"
-        message_prefix=" "
-        icon_prefix="/i:"
+        application_option="/a:"
+        app_icon_option=
+        title_option="/t:"
+        message_option=" "
+        icon_option="/i:"
         extra="/silent:true"
         ;;
+    growlnotify.py)
+        application_option="--application "
+        app_icon_option="--appicon "
+        title_option="--title "
+        message_option=" "
+        icon_option="--icon "
+        ;;
     snoretoast)
-        application_prefix="-appId "
-        app_icon_prefix=
-        title_prefix="-t "
-        message_prefix="-m "
-        icon_prefix="-p "
+        application_option="-appId "
+        app_icon_option=
+        title_option="-t "
+        message_option="-m "
+        icon_option="-p "
         extra="-silent"
         ;;
     *)
@@ -215,7 +276,7 @@ DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 #======================================================================
 # Set default values for most notifier options
-application_text="utman"
+application_name="utman"
 title_text="Unittests"
 start_text="Starting..."
 passed_text="Passed"
@@ -226,7 +287,7 @@ passed_icon="$DIR"/icon-passed.png
 failed_icon="$DIR"/icon-failed.png
 
 #======================================================================
-# Tweak depending on os and mechanism, if needed
+# Tweak depending on os and notifier, if needed
 if [ "$os" = "Cygwin" ] ; then
     # Need windows paths to icons
     app_icon=`cygpath -w -a "$app_icon"`
@@ -234,65 +295,83 @@ if [ "$os" = "Cygwin" ] ; then
     passed_icon=`cygpath -w -a "$passed_icon"`
     failed_icon=`cygpath -w -a "$failed_icon"`
 fi
-if [ "$mechanism" = "snoretoast" ] ; then
+if [ "$notifier" = "snoretoast" ] ; then
     # No app_icons for snoretoast
     app_icon=
 fi
 
 #======================================================================
 # Assemble all notifier options
-if [ "$application_prefix" != "" ] ; then
-    application="$application_prefix$application_text"
+if [ "$application_option" != "" ] ; then
+    application="$application_option$application_name"
 fi
-if [ "$app_icon_prefix" != "" ] ; then
-    app_icon="$app_icon_prefix$app_icon_text"
+if [ "$app_icon_option" != "" ] ; then
+    app_icon="$app_icon_option$app_icon_text"
 fi
-if [ "$title_prefix" != "" ] ; then
-    title="$title_prefix$title_text"
+if [ "$title_option" != "" ] ; then
+    title="$title_option$title_text"
 fi
-if [ "$icon_prefix" != "" ] ; then
-    start="$icon_prefix$start_icon $message_prefix$start_text"
-    passed="$icon_prefix$passed_icon $message_prefix$passed_text"
-    failed="$icon_prefix$failed_icon $message_prefix$failed_text"
+if [ "$icon_option" != "" ] ; then
+    start="$icon_option$start_icon $message_option$start_text"
+    passed="$icon_option$passed_icon $message_option$passed_text"
+    failed="$icon_option$failed_icon $message_option$failed_text"
 else
-    start="$message_prefix$start_text"
-    passed="$message_prefix$passed_text"
-    failed="$message_prefix$failed_text"
+    start="$message_option$start_text"
+    passed="$message_option$passed_text"
+    failed="$message_option$failed_text"
 fi
 
-
+watchercommand="$watcher $watcher_options $watcher_include $watcher_exclude ."
 #======================================================================
 # Let's run...
+debug_iteration=0
 while true ; do
     if [ $debug ] ; then
-        echo $watcher $watcher_options $ipattern $xpattern .
+        echo $watchercommand
     fi
-    $watcher $watcher_options $ipattern $xpattern .
+    trigger=`$watchercommand`
+    echo "Triggered by $trigger"
 
     # Indicate start
     if [ $debug ] ; then
-        echo START: "$notifier" $application $extra $title $start
+        echo START: "$notifier_command" $application $extra $title $start
     fi
-    "$notifier" $application $extra $title $start
+    "$notifier_command" $application $extra $title $start
 
-    # Run the command
-    ${@:1}
-    status=$?
+    if [ $debug ]; then
+        echo "Skipping running the command in debug mode..."
+        sleep 1
+        if [ $debug_iteration == 0 ]; then
+            status=-1
+            ((debug_iteration++))
+        else
+            status=0
+            ((debug_iteration++))
+        fi
+    else
+        # Run the command
+        ${@:1}
+        status=$?
+    fi
 
     # Indicate pass or fail depending on exit code
-    if [ $mechanism = "notify-send" ] ; then
+    if [ $notifier = "notify-send" ] ; then
         # Stock notify-send can't replace notification so kill all...
         killall notify-osd >/dev/null 2>&1
     fi
-    if [ $status = 0 ] ; then
+    if [ $status == 0 ] ; then
         if [ $debug ] ; then
-            echo FINISH: "$notifier" $application $extra $title $passed
+            echo FINISH: "$notifier_command" $application $extra $title $passed
         fi
-        "$notifier" $application $extra $title $passed
+        "$notifier_command" $application $extra $title $passed
     else
         if [ $debug ] ; then
-            echo FINISH: "$notifier" $application $extra $title $failed
+            echo FINISH: "$notifier_command" $application $extra $title $failed
         fi
-        "$notifier" $application $extra $title $failed
+        "$notifier_command" $application $extra $title $failed
+    fi
+
+    if [[ $debug_iteration == 2 ]]; then
+        exit
     fi
 done

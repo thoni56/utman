@@ -1,0 +1,11 @@
+#!/bin/sh
+#
+# Short script to run utman with a fake command to test its outputs
+./utman -d utman_test_command &
+sleep 3
+echo Sleep 3...
+echo "exit 1\n" > utman_test_command
+sleep 3
+echo Sleep 3...
+echo "exit 0\n" > utman_test_command
+rm utman_test_command
