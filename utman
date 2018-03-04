@@ -84,6 +84,9 @@ if [[ $help ]]; then
     echo "Currently recursively ignores files with pattern:"
     echo "    '.#*' and '.git/"
     echo
+    echo "You can also configure non-standard watchers and notifiers and"
+    echo "their options and settings in your ~/.utmanrc"
+
 fi
 if test "$#" -eq 0; then
     exit
@@ -92,6 +95,11 @@ fi
 os=`uname -s`
 if [[ "$os" == *"CYGWIN"* ]] ; then
     os="Cygwin"
+fi
+
+# Look for settings
+if [ -f ~/.utmanrc ]; then
+    . ~/.utmanrc
 fi
 
 #======================================================================
