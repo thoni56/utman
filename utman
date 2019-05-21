@@ -85,7 +85,9 @@ if [[ $help ]]; then
     echo "    '.#*' and '.git/"
     echo
     echo "You can also configure non-standard watchers and notifiers and"
-    echo "their options and settings in your ~/.utmanrc"
+    echo "their options and settings in your ~/.utmanrc:"
+    echo "  watcher=my_watcher"
+    echo "  notifier=my_notifier"
 
 fi
 if test "$#" -eq 0; then
@@ -99,6 +101,7 @@ fi
 
 # Look for settings
 if [ -f ~/.utmanrc ]; then
+    echo "Reading ~/.utmanrc..."
     . ~/.utmanrc
 fi
 
@@ -265,7 +268,7 @@ case $notifier in
         icon_option="-p "
         extra="-silent"
         ;;
-    *)
+    '')
         echo "Unknown notifier mechanism. Exiting..."
         exit
 esac
