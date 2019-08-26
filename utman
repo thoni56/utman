@@ -108,12 +108,18 @@ fi
 #======================================================================
 # Figure out how to watch files and the file pattern
 if [ "$watcher" == "" ]; then
+    # No watcher defined in ~/utmanrc
     watcher=''
     if command -v fswatch >/dev/null 2>&1 ; then
         watcher=fswatch
-        watcher_include=''
-        watcher_exclude='-e .\#.* -e .git' # Exclude emacs temporary files and git repo-files
-        watcher_options='-r -1 --event 14' # Recursive, one event, events=Created,Updated,Removed
+        if [ "$watcher_include" == "" ]; then
+            watcher_include=''
+        fi
+        if [ "$watcher_exclude" == "" ]; then
+            # Exclude emacs temporary files, git repo-files and __pychace__
+            watcher_exclude='-e .\#.* -e .git -e __pycache__'
+            watcher_options='-r -1 --event 14' # Recursive, one event, events=Created,Updated,Removed
+        fi
     fi
     if [ $debug ] ; then
         echo "Found watcher '$watcher'"
@@ -341,7 +347,9 @@ while true ; do
         echo $watchercommand
     fi
     trigger=`$watchercommand`
-    echo "Triggered by $trigger"
+    if [ $debug ] ; then
+        echo "Triggered by $trigger"
+    fi
 
     # Indicate start
     if [ $debug ] ; then
@@ -350,7 +358,7 @@ while true ; do
     "$notifier_command" $application $extra $title $start
 
     if [ $debug ]; then
-        echo "Skipping running the command in debug mode..."
+        echo "Skipping the command in debug mode: 'echo ${@:1}'"
         sleep 1
         if [ $debug_iteration == 0 ]; then
             status=-1
