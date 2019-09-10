@@ -100,6 +100,18 @@ if [[ "$os" == *"CYGWIN"* ]] ; then
 fi
 
 #======================================================================
+# Where's the source? The default icons are there...
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
+  DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+  SOURCE="$(readlink "$SOURCE")"
+  # if $SOURCE is a relative symlink, we must resolve it relative to the path where
+  # the symlinked file is located
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+
+#======================================================================
 # Set default values for most notifier options
 application_name="utman"
 title_text="Unittests"
@@ -293,18 +305,6 @@ case $notifier in
         echo "Unknown notifier mechanism. Exiting..."
         exit
 esac
-
-#======================================================================
-# Where's the source? The default icons are there...
-SOURCE="${BASH_SOURCE[0]}"
-while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
-  DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
-  SOURCE="$(readlink "$SOURCE")"
-  # if $SOURCE is a relative symlink, we must resolve it relative to the path where
-  # the symlinked file is located
-  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
-done
-DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 #======================================================================
 # Tweak depending on os and notifier, if needed
