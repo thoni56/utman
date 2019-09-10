@@ -99,6 +99,19 @@ if [[ "$os" == *"CYGWIN"* ]] ; then
     os="Cygwin"
 fi
 
+#======================================================================
+# Set default values for most notifier options
+application_name="utman"
+title_text="Unittests"
+start_text="Starting..."
+passed_text="Passed"
+failed_text="Failed"
+app_icon="$DIR"/utman-icon.png
+start_icon="$DIR"/icon-start.png
+passed_icon="$DIR"/icon-passed.png
+failed_icon="$DIR"/icon-failed.png
+
+#======================================================================
 # Look for settings
 if [ -f ~/.utmanrc ]; then
     echo "Reading ~/.utmanrc..."
@@ -292,18 +305,6 @@ while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symli
   [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
 done
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
-
-#======================================================================
-# Set default values for most notifier options
-application_name="utman"
-title_text="Unittests"
-start_text="Starting..."
-passed_text="Passed"
-failed_text="Failed"
-app_icon="$DIR"/utman-icon.png
-start_icon="$DIR"/icon-start.png
-passed_icon="$DIR"/icon-passed.png
-failed_icon="$DIR"/icon-failed.png
 
 #======================================================================
 # Tweak depending on os and notifier, if needed
