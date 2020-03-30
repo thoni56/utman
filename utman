@@ -149,11 +149,14 @@ if [ "$watcher" == "" ]; then
         fi
     fi
     if [ $debug ] ; then
-        echo "Found watcher '$watcher'"
+        echo "*** Found watcher '$watcher'"
+        echo "*** Include = $watcher_include"
+        echo "*** Exclude = $watcher_exclude"
+        echo "*** Options = $watcher_options"
     fi
 else
     if [ $debug ] ; then
-        echo "Using watcher '$watcher' from ~/.utmanrc"
+        echo "*** Using watcher '$watcher' from ~/.utmanrc"
     fi
 fi
 
@@ -163,13 +166,13 @@ fi
 
 if [ "$notifier" != "" ]; then
     if [ $debug ]; then
-        echo "Using notifier '$notifier' from ~/.utmanrc"
+        echo "*** Using notifier '$notifier' from ~/.utmanrc"
     fi
 else
     if command -v growlnotify.py >/dev/null 2>&1 ; then
         notifier=growlnotify.py
         if [ $debug ]; then
-            echo "Found notifier '$notifier'"
+            echo "*** Found notifier '$notifier'"
         fi
     fi
 fi
@@ -208,7 +211,7 @@ if [ "$notifier" == "" ]; then
             ;;
     esac
     if [ $debug ]; then
-        echo "Found notifier '$notifier'"
+        echo "*** Found notifier '$notifier'"
     fi
 fi
 
@@ -250,7 +253,7 @@ if [ "$notifier_command" == "" ]; then
 fi
 
 if [ $debug ] ; then
-    echo "Using notifier '$notifier' with command '$notifier_command'"
+    echo "*** Using notifier '$notifier' with command '$notifier_command'"
 fi
 
 
@@ -347,21 +350,22 @@ watchercommand="$watcher $watcher_options $watcher_include $watcher_exclude ."
 debug_iteration=0
 while true ; do
     if [ $debug ] ; then
-        echo $watchercommand
+        echo "*** $watchercommand"
     fi
     trigger=`$watchercommand`
+    clear
     if [ $debug ] ; then
         echo "Triggered by $trigger"
     fi
 
     # Indicate start
     if [ $debug ] ; then
-        echo START: "$notifier_command" $application $extra $title $start
+        echo "***" START: "$notifier_command" $application $extra $title $start
     fi
     "$notifier_command" $application $extra $title $start
 
     if [ $debug ]; then
-        echo "Skipping the command in debug mode: 'echo ${@:1}'"
+        echo "*** Skipping the command in debug mode: 'echo ${@:1}'"
         sleep 1
         if [ $debug_iteration == 0 ]; then
             status=-1
@@ -383,12 +387,12 @@ while true ; do
     fi
     if [ $status == 0 ] ; then
         if [ $debug ] ; then
-            echo FINISH: "$notifier_command" $application $extra $title $passed
+            echo "***" FINISH: "$notifier_command" $application $extra $title $passed
         fi
         "$notifier_command" $application $extra $title $passed
     else
         if [ $debug ] ; then
-            echo FINISH: "$notifier_command" $application $extra $title $failed
+            echo "***" FINISH: "$notifier_command" $application $extra $title $failed
         fi
         "$notifier_command" $application $extra $title $failed
     fi
