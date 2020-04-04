@@ -387,11 +387,13 @@ while true ; do
         killall notify-osd >/dev/null 2>&1
     fi
     if [ $status == 0 ] ; then
+        echo "*** Utman done: Passed"
         if [ $debug ] ; then
             echo "***" FINISH: "$notifier_command" $application $extra $title $passed
         fi
         "$notifier_command" $application $extra $title $passed
     else
+        echo "*** Utman done: Failed"
         if [ $debug ] ; then
             echo "***" FINISH: "$notifier_command" $application $extra $title $failed
         fi
