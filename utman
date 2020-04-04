@@ -375,6 +375,7 @@ while true ; do
             ((debug_iteration++))
         fi
     else
+        clear
         # Run the command
         ${@:1}
         status=$?
