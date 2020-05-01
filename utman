@@ -157,6 +157,9 @@ if [ "$watcher" == "" ]; then
 else
     if [ $debug ] ; then
         echo "*** Using watcher '$watcher' from ~/.utmanrc"
+        echo "*** Include = $watcher_include"
+        echo "*** Exclude = $watcher_exclude"
+        echo "*** Options = $watcher_options"
     fi
 fi
 
@@ -365,7 +368,7 @@ while true ; do
     "$notifier_command" $application $extra $title $start
 
     if [ $debug ]; then
-        echo "*** Skipping the command in debug mode: 'echo ${@:1}'"
+        echo "*** Skipping the command in debug mode: '${@:1}'"
         sleep 1
         if [ $debug_iteration == 0 ]; then
             status=-1
