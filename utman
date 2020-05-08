@@ -145,7 +145,7 @@ if [ "$watcher" == "" ]; then
             watcher_exclude='-e .\\#.\\* -e .git -e __pycache__ -e \\*.d -e \\*.gcda -e \\*.gcno'
         fi
         if [ "$watcher_options" == "" ]; then
-            watcher_options='-r -1 --event 14' # Recursive, one event, events=Created,Updated,Removed
+            watcher_options='-r -1 --event 31' # Recursive, one event, events=PlatformSpecific,Created,Updated,Removed,Renamed
         fi
     fi
     if [ $debug ] ; then
