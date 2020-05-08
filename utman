@@ -142,7 +142,7 @@ if [ "$watcher" == "" ]; then
         fi
         if [ "$watcher_exclude" == "" ]; then
             # Exclude emacs temporary files and some others
-            watcher_exclude='-e .\#.\\* -e .git -e __pycache__ -e \\*.d -e \\*.gcda -e \\*.gcno'
+            watcher_exclude='-e .\\#.\\* -e .git -e __pycache__ -e \\*.d -e \\*.gcda -e \\*.gcno'
         fi
         if [ "$watcher_options" == "" ]; then
             watcher_options='-r -1 --event 14' # Recursive, one event, events=Created,Updated,Removed
