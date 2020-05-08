@@ -357,9 +357,7 @@ while true ; do
     fi
     trigger=`$watchercommand`
     clear
-    if [ $debug ] ; then
-        echo "Triggered by $trigger"
-    fi
+    echo "Triggered by $trigger"
 
     # Indicate start
     if [ $debug ] ; then
