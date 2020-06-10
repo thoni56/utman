@@ -357,7 +357,7 @@ while true ; do
         fi
     else
         # Run the command
-        ${@:1}
+        "${@:1}"
         status=$?
     fi
 
