@@ -1,7 +1,9 @@
 #! /bin/bash
 #
-# Script to monitor files, run unittests, or any other command, and notify
-# user using the OS notification mechanism
+# utman - UnitTest Monitor And Notifier
+#
+# Script to monitor files, run unittests, or any other command, and
+# notify user using some OS notification mechanism
 #
 # Usage:
 #   utman [options] command ...
@@ -26,38 +28,16 @@
 #     extra=""
 #
 # If you set a notifier or watcher in you ~/.utmanrc you are
-# responsible to configure all the parts.
+# responsible for configuring all the parts.
 
-
-# Handle options
-while getopts ":t:dh" opt; do
-    case $opt in
-        h)
-            # Help
-            help=1
-            shift 1
-            ;;
-        d)
-            # Debug
-            debug=1
-            shift 1
-            ;;
-        t)
-            # Title
-            echo $OPTARG
-            title_text="$OPTARG"
-            shift 2
-            ;;
-        \?)
-            echo "ERROR: Invalid option -$OPTARG" >&2
-            exit 1
-            ;;
-        :)
-            echo "ERROR: Option -$OPTARG requires an argument." >&2
-            exit 1
-            ;;
-    esac
-done
+if [ $1 == "-d" ]; then
+    debug=1
+    shift
+fi
+if [ $1 == "-h" ]; then
+    help=1
+    shift
+fi
 
 # Is there a command or help option given?
 if test "$#" -eq 0; then
