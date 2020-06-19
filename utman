@@ -331,8 +331,8 @@ watchercommand="$watcher $watcher_options $watcher_include $watcher_exclude ."
 #======================================================================
 # Let's run...
 debug_iteration=0
+clear
 while true ; do
-    clear
     # Indicate start
     if [ $debug ] ; then
         echo "***" START: "$notifier_command" $application $extra $title $start
@@ -382,6 +382,7 @@ while true ; do
         echo "*** $watchercommand"
     fi
     trigger=`$watchercommand`
+    clear
     if [ $debug ] ; then
         echo "Triggered by $trigger"
     fi
