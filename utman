@@ -13,7 +13,7 @@
 # You can force utman to use specific, and unknown, notifiers and
 # watchers, or tweaking the defaults by entering information in your
 # ~/.utmanrc which will simply be executed before searching for
-# watchers and notifiers:
+# watchers and notifiers, e.g.:
 #
 #     watcher='fswatch'
 #     watcher_options='-r -1 --event 14'
@@ -122,7 +122,7 @@ if [ "$watcher" == "" ]; then
         fi
         if [ "$watcher_exclude" == "" ]; then
             # Exclude emacs temporary files and some others
-            watcher_exclude='-e .\\#.\\* -e .git -e __pycache__ -e \\*.d -e \\*.gcda -e \\*.gcno -e \\*.gcov'
+            watcher_exclude='-e \.#.* -e .git -e __pycache__ -e *.d -e *.gcda -e *.gcno -e *.gcov'
         fi
         if [ "$watcher_options" == "" ]; then
             if [ "`uname -s`" == "Linux" ]; then
